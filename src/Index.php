@@ -288,19 +288,33 @@ abstract class Index
             Versioned::set_stage(Versioned::LIVE);
         }
 
-        foreach ($this->getDataList() as $record) {
-            /** @var DataObject|FluentVersionedExtension|FluentExtension $record */
-            if (
-                ($record->hasExtension(FluentVersionedExtension::class) && !$record->isPublishedInLocale())
-                || ($record->hasExtension(FluentExtension::class) && !$record->existsInLocale())
-            ) {
-                continue;
+        $chunkSize = 500;
+        $currentChunk = 0;
+
+        // Keep looping until we run out of chunks
+        while ($chunk = $this->getDataList()->limit($chunkSize, $chunkSize * $currentChunk)->getIterator()) {
+            // Loop over all the item in our chunk
+            foreach ($chunk as $record) {
+                /** @var DataObject|FluentVersionedExtension|FluentExtension $record */
+                if (
+                    ($record->hasExtension(FluentVersionedExtension::class) && !$record->isPublishedInLocale())
+                    || ($record->hasExtension(FluentExtension::class) && !$record->existsInLocale())
+                ) {
+                    continue;
+                }
+
+                $this->add(Document::create($record), false);
             }
 
-            $this->add(Document::create($record), false);
-        }
+            $this->commit();
 
-        $this->commit();
+            if ($chunk->count() < $chunkSize) {
+                // If our last chunk had less item than our chunkSize, we've reach the end.
+                break;
+            }
+
+            $currentChunk++;
+        }
 
         if (
             ClassInfo::exists(Versioned::class)
@@ -317,40 +331,22 @@ abstract class Index
     protected array $uncommitted = [];
 
     /**
-     * @param Document|array $documents
+     * @param Document $document
      * @param bool $commit
      * @return $this
      * @throws NotFoundExceptionInterface
      * @throws Throwable
      */
-    public function add(Document|array $documents, bool $commit = true): self
+    public function add(Document $document, bool $commit = true): self
     {
-        if (!is_array($documents)) {
-            $documents = [$documents];
-        }
-
         $excludedClasses = static::config()->uninherited('excluded_classes') ?? [];
 
-        foreach ($documents as $key => $document) {
-            if (
-                !($document instanceof Document)
-                || in_array($document->record::class, $excludedClasses)
-            ) {
-                unset($documents[$key]);
+        if (!$excludedClasses || !in_array($document->record::class, $excludedClasses)) {
+            $this->uncommitted[] = $document->toArray();
+
+            if ($commit) {
+                $this->commit();
             }
-        }
-
-        if (empty($documents)) {
-            return $this;
-        }
-
-        $this->uncommitted = array_merge(
-            $this->uncommitted,
-            $documents
-        );
-
-        if ($commit) {
-            $this->commit();
         }
 
         return $this;
@@ -367,13 +363,7 @@ abstract class Index
             return $this;
         }
 
-        $documents = [];
-
-        foreach ($this->uncommitted as $document) {
-            $documents[] = $document->toArray();
-        }
-
-        static::get_client()->index($this->getIndexName())->addDocuments($documents, 'ID');
+        static::get_client()->index($this->getIndexName())->addDocuments($this->uncommitted, 'ID');
 
         $this->uncommitted = [];
 
