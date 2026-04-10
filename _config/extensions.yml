@@ -1,5 +1,7 @@
 ---
 Name: bimthebam-silverstripe-meilisearch-extensions
+Only:
+  classexists: SilverStripe\CMS\Model\SiteTree
 ---
 
 SilverStripe\CMS\Model\SiteTree:

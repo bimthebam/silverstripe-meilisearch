@@ -3,14 +3,14 @@
 namespace BimTheBam\Meilisearch\SearchResults;
 
 use SilverStripe\ORM\DataObject;
-use SilverStripe\View\ViewableData;
+use SilverStripe\Model\ModelData;
 
 /**
  * Class Result
  * @package BimTheBam\Meilisearch\SearchResults
  * @property DataObject|null $Record
  */
-class Result extends ViewableData
+class Result extends ModelData
 {
     /**
      * @var bool
@@ -25,6 +25,7 @@ class Result extends ViewableData
     /**
      * @param string $RecordClassName
      * @param int $RecordID
+     * @param float $Score
      */
     public function __construct(
         public readonly string $RecordClassName,

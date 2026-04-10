@@ -1,10 +1,17 @@
 <?php
 
+// phpcs:disable PSR1.Files.SideEffects.FoundWithSymbols
+
 namespace BimTheBam\Meilisearch\Control\CMS;
+
+if (!class_exists(\PageController::class)) {
+    return;
+}
 
 use BimTheBam\Meilisearch\Form\SearchForm;
 use BimTheBam\Meilisearch\Model\CMS\SearchPage;
 use SilverStripe\Forms\Form;
+use SilverStripe\Model\ModelData;
 
 /**
  * Class SearchPageController
@@ -34,9 +41,9 @@ class SearchPageController extends \PageController
     /**
      * @param array $data
      * @param SearchForm $form
-     * @return \SilverStripe\View\ViewableData_Customised
+     * @return ModelData
      */
-    public function doSearch(array $data, SearchForm $form)
+    public function doSearch(array $data, SearchForm $form): ModelData
     {
         $form->loadDataFrom($data);
 

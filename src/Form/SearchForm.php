@@ -14,11 +14,11 @@ use SilverStripe\Forms\CheckboxSetField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\Form;
 use SilverStripe\Forms\FormAction;
-use SilverStripe\Forms\RequiredFields;
 use SilverStripe\Forms\TextField;
-use SilverStripe\Forms\Validator;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\View\ArrayData;
+use SilverStripe\Forms\Validation\RequiredFieldsValidator;
+use SilverStripe\Forms\Validation\Validator;
+use SilverStripe\Model\ArrayData;
+use SilverStripe\Model\List\ArrayList;
 use Throwable;
 
 /**
@@ -34,7 +34,7 @@ class SearchForm extends Form
      * @throws ReflectionException
      * @throws Throwable
      */
-    public function __construct(RequestHandler $controller = null, string $name = self::DEFAULT_NAME)
+    public function __construct(?RequestHandler $controller = null, string $name = self::DEFAULT_NAME)
     {
         parent::__construct(
             $controller,
@@ -110,7 +110,7 @@ class SearchForm extends Form
      */
     protected function defaultValidator(): Validator
     {
-        $validator = RequiredFields::create([
+        $validator = RequiredFieldsValidator::create([
             'q',
         ]);
 
@@ -146,7 +146,11 @@ class SearchForm extends Form
                 $index = Injector::inst()->get($indexClass);
 
                 if (($sng = $index->getDataObjectSingleton()) !== null) {
-                    if ($sortedAndSiteTreePrioritized && $index->handles(SiteTree::class)) {
+                    if (
+                        $sortedAndSiteTreePrioritized
+                        && ClassInfo::exists(SiteTree::class)
+                        && $index->handles(SiteTree::class)
+                    ) {
                         $siteTreeIndex = $index;
                         continue;
                     }
@@ -208,8 +212,6 @@ class SearchForm extends Form
         if (empty($q = trim($data['q'] ?? ''))) {
             return $results;
         }
-
-        $queries = [];
 
         foreach ($this->getIndexes(true) as $index) {
             if ($searchIn !== null && !in_array($index->getUniqueKey(), $searchIn)) {

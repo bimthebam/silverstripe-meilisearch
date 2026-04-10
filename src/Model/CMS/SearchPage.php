@@ -1,6 +1,12 @@
 <?php
 
+// phpcs:disable PSR1.Files.SideEffects.FoundWithSymbols
+
 namespace BimTheBam\Meilisearch\Model\CMS;
+
+if (!class_exists(\Page::class)) {
+    return;
+}
 
 use BimTheBam\Meilisearch\Control\CMS\SearchPageController;
 

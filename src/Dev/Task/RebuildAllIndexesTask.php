@@ -8,6 +8,9 @@ use ReflectionException;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\BuildTask;
+use SilverStripe\PolyExecution\PolyOutput;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
 use Throwable;
 
 /**
@@ -19,32 +22,36 @@ class RebuildAllIndexesTask extends BuildTask
     /**
      * @var string
      */
-    private static string $segment = 'meilisearch-rebuild-all-indexes';
+    protected static string $commandName = 'meilisearch-rebuild-all-indexes';
 
     /**
      * @var string
      */
-    protected $title = 'Rebuild all meilisearch indexes';
+    protected string $title = 'Rebuild all meilisearch indexes';
 
     /**
      * @var string
      */
-    protected $description = '';
+    protected static string $description = 'Rebuilds all configured mailsearch indexes';
 
     /**
-     * @param $request
-     * @return void
+     * @param InputInterface $input
+     * @param PolyOutput $output
+     * @return int
      * @throws NotFoundExceptionInterface
      * @throws ReflectionException
      * @throws Throwable
      */
-    public function run($request): void
+    protected function execute(InputInterface $input, PolyOutput $output): int
     {
         foreach (ClassInfo::subclassesFor(Index::class, false) as $indexClass) {
             /** @var Index $index */
             $index = Injector::inst()->create($indexClass);
 
+            $output->writeln('Rebuilding index: ' . $indexClass);
             $index->rebuild();
         }
+
+        return Command::SUCCESS;
     }
 }

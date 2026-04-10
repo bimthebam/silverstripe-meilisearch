@@ -22,12 +22,12 @@ class SiteTree extends SearchableVersioned
      * @throws ReflectionException
      * @throws Throwable
      */
-    public function onAfterPublish(): void
+    protected function onAfterPublish(): void
     {
         if ($this->owner->ShowInSearch) {
             parent::onAfterPublish();
         } else {
-            Index::for_class($this->owner)->remove(
+            Index::for_class($this->owner::class)?->remove(
                 Document::create($this->owner)
             );
         }
@@ -39,12 +39,10 @@ class SiteTree extends SearchableVersioned
      * @throws ReflectionException
      * @throws Throwable
      */
-    public function onAfterWrite(): void
+    protected function onAfterWrite(): void
     {
-        parent::onAfterWrite();
-
         if (!$this->owner->ShowInSearch) {
-            Index::for_class($this->owner)->remove(
+            Index::for_class($this->owner::class)?->remove(
                 Document::create($this->owner)
             );
         }

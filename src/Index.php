@@ -94,9 +94,11 @@ abstract class Index
      */
     public function handles(string $class): bool
     {
-        $classAncestry = ClassInfo::ancestry($class);
+        if (($sng = $this->getDataObjectSingleton()) === null) {
+            return false;
+        }
 
-        return in_array($this->getDataObjectSingleton()::class, $classAncestry);
+        return in_array($sng::class, ClassInfo::ancestry($class));
     }
 
     /**
@@ -146,12 +148,12 @@ abstract class Index
 
         if (empty($class = (static::config()->get('data_object_base_class')))) {
             static::throw_or_log(new \RuntimeException(static::class . '::data_object_base_class not defined.'));
+
+            return null;
         }
 
         if (!ClassInfo::exists($class)) {
-            static::throw_or_log(
-                new \RuntimeException(static::class . '::data_object_base_class (' . $class . ') does not exist.')
-            );
+            return null;
         }
 
         if (!in_array(DataObject::class, ClassInfo::ancestry($class))) {
@@ -161,6 +163,8 @@ abstract class Index
                     'is not a valid subclass of ' . DataObject::class . '.'
                 )
             );
+
+            return null;
         }
 
         try {

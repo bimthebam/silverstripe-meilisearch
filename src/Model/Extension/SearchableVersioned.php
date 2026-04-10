@@ -6,14 +6,14 @@ use BimTheBam\Meilisearch\Index;
 use BimTheBam\Meilisearch\Model\Document;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionException;
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Extension;
 use Throwable;
 
 /**
  * Class SearchableVersioned
  * @package BimTheBam\Meilisearch\Model\Extension
  */
-class SearchableVersioned extends DataExtension
+class SearchableVersioned extends Extension
 {
     /**
      * @return void
@@ -21,7 +21,7 @@ class SearchableVersioned extends DataExtension
      * @throws ReflectionException
      * @throws Throwable
      */
-    public function onAfterPublish(): void
+    protected function onAfterPublish(): void
     {
         Index::for_class($this->owner::class)?->add(
             Document::create($this->owner)
@@ -34,7 +34,7 @@ class SearchableVersioned extends DataExtension
      * @throws ReflectionException
      * @throws Throwable
      */
-    public function onAfterUnpublish(): void
+    protected function onAfterUnpublish(): void
     {
         Index::for_class($this->owner::class)?->remove(
             Document::create($this->owner)
